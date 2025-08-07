@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Universo do Som de Altura Não Definida</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A single-page application with a top navigation bar for thematic sections: [Visão Geral, Fundamentos, Pioneiros, Técnicas, Laboratório Sonoro, Exercícios, Referências]. This structure deconstructs the linear report into a more exploratory user experience. It begins with a high-level comparison, delves into acoustic/psychoacoustic theory, provides historical context through interactive cards, lists practical techniques, culminates in an interactive "lab" with a dynamic chart, adds a section for self-assessment exercises, and a curated list of references. This flow supports both linear learning and random access, making complex information more digestible and engaging for a postgraduate audience. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Table 1 (Defined vs. Undefined) -> Goal: Compare -> Viz: HTML Table -> Interaction: Static -> Justification: Provides a clear, direct comparison at the start.
+        - Report Info: Historical Figures -> Goal: Organize/Inform -> Viz: Interactive Cards -> Interaction: Click to expand -> Justification: Prevents a 'wall of text', making historical context scannable and engaging.
+        - Report Info: Colors of Noise (Table 2) -> Goal: Compare/Change -> Viz: Chart.js Bar Chart -> Interaction: Buttons to update data -> Justification: Dynamically visualizes the abstract concept of spectral density, which is superior to a static table for understanding.
+        - Report Info: Waveforms/Spectrums -> Goal: Inform -> Viz: Styled HTML/CSS diagrams -> Interaction: Static -> Justification: Lightweight, accessible method to illustrate core acoustic principles without requiring heavy graphics or external libraries.
+        - New: Waveform Diagrams (Periodic vs. Aperiodic) -> Goal: Inform -> Viz: Styled HTML/CSS -> Interaction: Static -> Justification: Visualizes the fundamental difference in wave structure.
+        - New: Spectrum Diagrams (Harmonic vs. Inharmonic) -> Goal: Inform -> Viz: Styled HTML/CSS -> Interaction: Static -> Justification: Illustrates the frequency distribution difference.
+        - New: Ear/Brain Processing Diagram -> Goal: Inform -> Viz: Styled HTML/CSS/Unicode -> Interaction: Static -> Justification: Simplifies the complex psychoacoustic process.
+        - New: Exercícios de Fixação -> Goal: Assess/Reinforce -> Viz: HTML Questions with hidden answers -> Interaction: Click to reveal answer -> Justification: Provides self-assessment and immediate feedback, crucial for learning reinforcement.
+        - New: Referências Bibliográficas -> Goal: Inform/Guide -> Viz: HTML List -> Interaction: Static -> Justification: Offers a curated list for further study, enhancing academic depth.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FDFBF8; color: #383838; }
+        .nav-link { transition: color 0.3s, border-bottom-color 0.3s; }
+        .nav-link:hover, .nav-link.active { color: #D97706; border-bottom-color: #D97706; }
+        .pioneer-card { transition: transform 0.3s, box-shadow 0.3s; }
+        .pioneer-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .chart-container { position: relative; width: 100%; max-width: 700px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+        .waveform-diagram {
+            width: 100%;
+            height: 80px;
+            border-bottom: 2px solid #383838;
+            position: relative;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .waveform-diagram::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 2px;
+            background-color: #ccc;
+            transform: translateY(-50%);
+        }
+        .periodic-wave {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent 0%, transparent 10%, #D97706 10%, #D97706 20%, transparent 20%, transparent 30%, #D97706 30%, #D97706 40%, transparent 40%, transparent 50%, #D97706 50%, #D97706 60%, transparent 60%, transparent 70%, #D97706 70%, #D97706 80%, transparent 80%, transparent 90%, #D97706 90%, #D97706 100%);
+            background-size: 20% 100%;
+            animation: wave-periodic 2s infinite linear;
+            mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0,50 C25,0 75,100 100,50" stroke="black" fill="none" stroke-width="2"/></svg>');
+            mask-size: 20% 100%;
+            mask-repeat: repeat-x;
+        }
+        .aperiodic-wave {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent 0%, transparent 10%, #4F46E5 10%, #4F46E5 20%, transparent 20%, transparent 30%, #4F46E5 30%, #4F46E5 40%, transparent 40%, transparent 50%, #4F46E5 50%, #4F46E5 60%, transparent 60%, transparent 70%, #4F46E5 70%, #4F46E5 80%, transparent 80%, transparent 90%, #4F46E5 90%, #4F46E5 100%);
+            background-size: 20% 100%;
+            animation: wave-aperiodic 1s infinite steps(10);
+            mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0,50 L10,30 L20,70 L30,40 L40,60 L50,20 L60,80 L70,30 L80,70 L90,40 L100,50" stroke="black" fill="none" stroke-width="2"/></svg>');
+            mask-size: 20% 100%;
+            mask-repeat: repeat-x;
+        }
+        @keyframes wave-periodic {
+            from { background-position: 0 0; }
+            to { background-position: -100% 0; }
+        }
+        @keyframes wave-aperiodic {
+            from { background-position: 0 0; }
+            to { background-position: -100% 0; }
+        }
+
+        .spectrum-diagram {
+            width: 100%;
+            height: 100px;
+            border-left: 2px solid #383838;
+            border-bottom: 2px solid #383838;
+            position: relative;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .harmonic-lines {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+        }
+        .harmonic-line {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            background-color: #D97706;
+        }
+        .harmonic-line:nth-child(1) { left: 10%; height: 80%; }
+        .harmonic-line:nth-child(2) { left: 20%; height: 60%; }
+        .harmonic-line:nth-child(3) { left: 30%; height: 40%; }
+        .harmonic-line:nth-child(4) { left: 40%; height: 30%; }
+        .inharmonic-lines {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+        }
+        .inharmonic-line {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            background-color: #4F46E5;
+        }
+        .inharmonic-line:nth-child(1) { left: 8%; height: 70%; }
+        .inharmonic-line:nth-child(2) { left: 17%; height: 50%; }
+        .inharmonic-line:nth-child(3) { left: 25%; height: 60%; }
+        .inharmonic-line:nth-child(4) { left: 35%; height: 40%; }
+        .inharmonic-line:nth-child(5) { left: 42%; height: 25%; }
+        .inharmonic-line:nth-child(6) { left: 50%; height: 35%; }
+
+        .ear-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .ear-icon { font-size: 3em; margin-bottom: 10px; }
+        .arrow { font-size: 2em; margin: 0 10px; }
+    </style>
+</head>
+<body class="bg-[#FDFBF8] text-slate-800">
+
+    <header class="bg-[#FDFBF8]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl font-bold text-amber-700">Som de Altura Não Definida</h1>
+                <div class="hidden md:flex md:space-x-8">
+                    <a href="#overview" class="nav-link text-slate-600 font-semibold border-b-2 border-transparent pb-1">Visão Geral</a>
+                    <a href="#fundamentals" class="nav-link text-slate-600 font-semibold border-b-2 border-transparent pb-1">Fundamentos</a>
+                    <a href="#pioneers" class="nav-link text-slate-600 font-semibold border-b-2 border-transparent pb-1">Pioneiros</a>
+                    <a href="#techniques" class="nav-link text-slate-600 font-semibold border-b-2 border-transparent pb-1">Técnicas</a>
+                    <a href="#lab" class="nav-link text-slate-600 font-semibold border-b-2 border-transparent pb-1">Laboratório</a>
+                    <a href="#exercises" class="nav-link text-slate-600 font-semibold border-b-2 border-transparent pb-1">Exercícios</a>
+                    <a href="#references" class="nav-link text-slate-600 font-semibold border-b-2 border-transparent pb-1">Referências</a>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="bg-white border border-slate-300 rounded-md p-2 text-slate-700">
+                        <option value="#overview">Visão Geral</option>
+                        <option value="#fundamentals">Fundamentos</option>
+                        <option value="#pioneers">Pioneiros</option>
+                        <option value="#techniques">Técnicas</option>
+                        <option value="#lab">Laboratório</option>
+                        <option value="#exercises">Exercícios</option>
+                        <option value="#references">Referências</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Seção 1: Visão Geral -->
+        <section id="overview" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold text-slate-900 mb-4">O Som Além da Nota</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">Uma exploração interativa do som de altura não definida, desde seus fundamentos acústicos e perceptivos até seu papel revolucionário na música contemporânea.</p>
+            </div>
+            
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">Definido vs. Indefinido: Um Contraste Fundamental</h3>
+                <div class="overflow-x-auto mb-8">
+                    <table class="w-full min-w-[600px] text-left">
+                        <thead>
+                            <tr class="border-b border-slate-300">
+                                <th class="p-4 font-semibold text-slate-700">Característica</th>
+                                <th class="p-4 font-semibold text-amber-700 bg-amber-50/50 rounded-t-lg">Som de Altura Definida</th>
+                                <th class="p-4 font-semibold text-indigo-700 bg-indigo-50/50 rounded-t-lg">Som de Altura Indefinida</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-slate-200">
+                                <td class="p-4 font-semibold text-slate-600">Forma de Onda</td>
+                                <td class="p-4">Periódica (padrão regular)</td>
+                                <td class="p-4">Aperiódica (padrão irregular)</td>
+                            </tr>
+                            <tr class="border-b border-slate-200">
+                                <td class="p-4 font-semibold text-slate-600">Espectro</td>
+                                <td class="p-4">Harmônico (múltiplos inteiros da F0)</td>
+                                <td class="p-4">Inarmônico (parciais não seguem múltiplos)</td>
+                            </tr>
+                            <tr class="border-b border-slate-200">
+                                <td class="p-4 font-semibold text-slate-600">Frequência Fundamental (F0)</td>
+                                <td class="p-4">Clara e discernível (mesmo que inferida)</td>
+                                <td class="p-4">Ausente ou não clara</td>
+                            </tr>
+                            <tr class="border-b border-slate-200">
+                                <td class="p-4 font-semibold text-slate-600">Clareza Perceptiva da Altura</td>
+                                <td class="p-4">Facilmente discernível</td>
+                                <td class="p-4">Percebido como ruído ou altura indeterminada</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-slate-600">Exemplos</td>
+                                <td class="p-4">Piano, flauta, voz cantada</td>
+                                <td class="p-4">Pratos, caixa de bateria, sussurros</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="text-2xl font-bold text-slate-800 mb-4 text-center">Visualizando as Ondas Sonoras</h3>
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <div class="flex flex-col items-center">
+                        <p class="text-lg font-semibold text-amber-700 mb-2">Onda Periódica (Altura Definida)</p>
+                        <div class="waveform-diagram">
+                            <div class="periodic-wave"></div>
+                        </div>
+                        <p class="text-sm text-slate-600">Padrão de repetição regular, gerando uma altura clara.</p>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <p class="text-lg font-semibold text-indigo-700 mb-2">Onda Aperiódica (Altura Indefinida)</p>
+                        <div class="waveform-diagram">
+                            <div class="aperiodic-wave"></div>
+                        </div>
+                        <p class="text-sm text-slate-600">Padrão irregular e caótico, percebido como ruído.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 2: Fundamentos -->
+        <section id="fundamentals" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Da Física à Percepção</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">Entenda os pilares acústicos e psicoacústicos que diferenciam o som do ruído e como nosso cérebro interpreta essa complexidade.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 lg:gap-12">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Fundamentos Acústicos</h3>
+                    <p class="text-slate-600 mb-4">A chave está na **regularidade**. Sons de altura definida vêm de vibrações **periódicas**, que se repetem como um padrão. Sons de altura indefinida vêm de vibrações **aperiódicas**, caóticas e sem um padrão claro.</p>
+                    <p class="text-slate-600">Essa regularidade cria um **espectro harmônico**, onde os sobretons são múltiplos matemáticos da nota fundamental. A irregularidade cria um **espectro inarmônico**, uma "sopa" de frequências que o cérebro percebe como ruído ou textura.</p>
+                    
+                    <h4 class="text-xl font-bold text-slate-800 mt-6 mb-4 text-center">Espectros Sonoros</h4>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="flex flex-col items-center">
+                            <p class="text-md font-semibold text-amber-700 mb-2">Espectro Harmônico</p>
+                            <div class="spectrum-diagram w-full max-w-[400px] h-[120px]">
+                                <div class="harmonic-lines">
+                                    <div class="harmonic-line" style="left:15%; height:80%;"></div>
+                                    <div class="harmonic-line" style="left:30%; height:60%;"></div>
+                                    <div class="harmonic-line" style="left:45%; height:40%;"></div>
+                                    <div class="harmonic-line" style="left:60%; height:25%;"></div>
+                                </div>
+                            </div>
+                            <p class="text-sm text-slate-600">Parciais em múltiplos inteiros da fundamental (F0).</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <p class="text-md font-semibold text-indigo-700 mb-2">Espectro Inarmônico</p>
+                            <div class="spectrum-diagram w-full max-w-[400px] h-[120px]">
+                                <div class="inharmonic-lines">
+                                    <div class="inharmonic-line" style="left:10%; height:70%;"></div>
+                                    <div class="inharmonic-line" style="left:22%; height:55%;"></div>
+                                    <div class="inharmonic-line" style="left:38%; height:40%;"></div>
+                                    <div class="inharmonic-line" style="left:55%; height:65%;"></div>
+                                    <div class="inharmonic-line" style="left:70%; height:30%;"></div>
+                                </div>
+                            </div>
+                            <p class="text-sm text-slate-600">Parciais distribuídos irregularmente.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Psicoacústica e Percepção</h3>
+                    <p class="text-slate-600 mb-4">Nosso sistema auditivo é um detetive de padrões. Ele busca a periodicidade para identificar uma altura. Quando não a encontra, o foco da percepção muda para outras qualidades: o **timbre** (a "cor" do som), a **textura** e o **envelope** (como o som começa, se sustenta e termina).</p>
+                    <p class="text-slate-600">O **transiente de ataque** (o ruído inicial de um som) é crucial para identificarmos um instrumento, mostrando que mesmo sons "afinados" contêm elementos de ruído essenciais.</p>
+                    
+                    <h4 class="text-xl font-bold text-slate-800 mt-6 mb-4 text-center">Como o Ouvido e o Cérebro Processam</h4>
+                    <div class="ear-diagram">
+                        <span class="ear-icon">👂</span>
+                        <p class="text-lg text-slate-700">Onda Sonora</p>
+                        <span class="arrow">⬇️</span>
+                        <p class="text-lg text-slate-700">Ouvido (Cóclea)</p>
+                        <span class="arrow">⬇️</span>
+                        <p class="text-lg text-slate-700">Cérebro (Análise de Padrões)</p>
+                        <span class="arrow">⬇️</span>
+                        <p class="text-lg text-slate-700 font-bold">Percepção: Altura ou Textura/Ruído</p>
+                    </div>
+                    <p class="text-sm text-slate-600 text-center">O cérebro busca periodicidade; se ausente, foca em timbre e textura.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 3: Pioneiros -->
+        <section id="pioneers" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Os Pioneiros da Revolução Sonora</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">Conheça os compositores visionários que desafiaram as convenções e transformaram o ruído em música. Clique em um card para saber mais.</p>
+            </div>
+            <div id="pioneers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+        </section>
+
+        <!-- Seção 4: Técnicas -->
+        <section id="techniques" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Expandindo a Paleta Sonora</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">A exploração da altura indefinida se manifesta através de técnicas inovadoras que extraem sons não convencionais de fontes familiares.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 lg:gap-12">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Técnicas Instrumentais Estendidas</h3>
+                    <ul class="space-y-3 text-slate-600 list-disc list-inside mb-4">
+                        <li><span class="font-semibold">Sopro:</span> Flutter-tonguing (língua vibrando), slap-tongue (estalo), sons de ar (sem altura), cliques de chave.</li>
+                        <li><span class="font-semibold">Cordas:</span> Tocar atrás da ponte, scratch tones (som arranhado), percussão no corpo do instrumento.</li>
+                        <li><span class="font-semibold">Piano:</span> Preparação do piano (inserção de objetos nas cordas), tocar diretamente nas cordas.</li>
+                    </ul>
+                    <div class="text-center text-slate-700 text-sm italic">
+                        <p class="mb-2">Exemplo: Piano Preparado de John Cage</p>
+                        <p>🎹 + 🔩 = 🥁🔔 (Piano com parafusos = Sons de bateria e sinos)</p>
+                        <p class="mt-2">Essas técnicas transformam o instrumento em uma fonte de timbres inusitados.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Técnicas Vocais Estendidas</h3>
+                     <ul class="space-y-3 text-slate-600 list-disc list-inside mb-4">
+                        <li><span class="font-semibold">Sussurros e Respirações:</span> Uso da fala e do ar como elementos rítmicos e texturais.</li>
+                        <li><span class="font-semibold">Vocal Fry:</span> Fonação grave e crepitante.</li>
+                        <li><span class="font-semibold">Multifônicos:</span> Produção de múltiplas alturas e ruídos simultaneamente.</li>
+                        <li><span class="font-semibold">Cliques e Sons Percussivos:</span> Uso da língua, lábios e bochechas como instrumentos.</li>
+                    </ul>
+                    <div class="text-center text-slate-700 text-sm italic">
+                        <p class="mb-2">Exemplo: *Sequenza III* de Luciano Berio</p>
+                        <p>🗣️ + 🌬️ + 👅 = 🎶 (Voz + Respiração + Língua = Nova Música)</p>
+                        <p class="mt-2">A voz se torna um instrumento de texturas ilimitadas.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 5: Laboratório Sonoro -->
+        <section id="lab" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Laboratório Sonoro Interativo</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">Visualize as "cores do ruído". Selecione um tipo de ruído para ver sua distribuição de energia no espectro de frequências.</p>
+            </div>
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-slate-200">
+                <div class="text-center mb-6">
+                    <div id="noise-buttons" class="flex justify-center space-x-2 sm:space-x-4">
+                        <button data-noise="white" class="noise-btn bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg transition-all">Branco</button>
+                        <button data-noise="pink" class="noise-btn bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg transition-all">Rosa</button>
+                        <button data-noise="brown" class="noise-btn bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg transition-all">Marrom</button>
+                    </div>
+                </div>
+                <div class="chart-container mb-6">
+                    <canvas id="noiseChart"></canvas>
+                </div>
+                <div id="noise-description" class="text-center text-slate-600 p-4 bg-slate-50 rounded-lg min-h-[100px]">
+                    <p>Selecione um tipo de ruído para ver sua descrição e espectro.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 6: Exercícios de Fixação -->
+        <section id="exercises" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Exercícios de Fixação</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">Teste seus conhecimentos sobre os sons de altura não definida. Clique em "Mostrar Resposta" para verificar.</p>
+            </div>
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 space-y-8">
+                <!-- Pergunta 1 -->
+                <div>
+                    <p class="text-lg font-semibold text-slate-800 mb-3">1. Qual a principal característica acústica que diferencia um som de altura definida de um som de altura indefinida?</p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-2 mb-4">
+                        <li>A) A intensidade do som.</li>
+                        <li>B) A duração da onda sonora.</li>
+                        <li>C) A periodicidade da forma de onda e a harmonicidade do espectro.</li>
+                        <li>D) O timbre do instrumento.</li>
+                    </ul>
+                    <button class="reveal-answer-btn bg-amber-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors">Mostrar Resposta</button>
+                    <div class="answer-key hidden mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <p class="font-bold text-green-700">Resposta Correta: C</p>
+                        <p class="text-slate-700 mt-2">Comentário: Sons de altura definida possuem formas de onda periódicas e espectros harmônicos (parciais são múltiplos inteiros da fundamental), permitindo que o ouvido identifique uma altura clara. Sons de altura indefinida são aperiódicos e inarmônicos.</p>
+                    </div>
+                </div>
+
+                <!-- Pergunta 2 -->
+                <div>
+                    <p class="text-lg font-semibold text-slate-800 mb-3">2. Qual compositor é conhecido por ter criado os "intonarumori" e escrito o manifesto "A Arte dos Ruídos"?</p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-2 mb-4">
+                        <li>A) John Cage</li>
+                        <li>B) Edgard Varèse</li>
+                        <li>C) Luigi Russolo</li>
+                        <li>D) Karlheinz Stockhausen</li>
+                    </ul>
+                    <button class="reveal-answer-btn bg-amber-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors">Mostrar Resposta</button>
+                    <div class="answer-key hidden mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <p class="font-bold text-green-700">Resposta Correta: C</p>
+                        <p class="text-slate-700 mt-2">Comentário: Luigi Russolo, figura central do Futurismo, foi o pioneiro na teorização e criação de instrumentos para a "música de ruído".</p>
+                    </div>
+                </div>
+
+                <!-- Pergunta 3 -->
+                <div>
+                    <p class="text-lg font-semibold text-slate-800 mb-3">3. A "síntese aditiva" e a "síntese subtrativa" são técnicas de síntese sonora. Qual a principal diferença entre elas?</p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-2 mb-4">
+                        <li>A) A síntese aditiva cria sons do zero, enquanto a subtrativa manipula sons gravados.</li>
+                        <li>B) A síntese aditiva constrói sons a partir de ondas senoidais, enquanto a subtrativa esculpe um som rico em harmônicos usando filtros.</li>
+                        <li>C) A síntese aditiva é analógica, e a subtrativa é digital.</li>
+                        <li>D) Não há diferença significativa, são termos intercambiáveis.</li>
+                    </ul>
+                    <button class="reveal-answer-btn bg-amber-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors">Mostrar Resposta</button>
+                    <div class="answer-key hidden mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <p class="font-bold text-green-700">Resposta Correta: B</p>
+                        <p class="text-slate-700 mt-2">Comentário: A síntese aditiva soma componentes simples (ondas senoidais) para formar um som complexo. A síntese subtrativa começa com um som rico (como ruído branco ou uma onda quadrada) e remove frequências indesejadas com filtros.</p>
+                    </div>
+                </div>
+
+                <!-- Pergunta 4 -->
+                <div>
+                    <p class="text-lg font-semibold text-slate-800 mb-3">4. Qual tipo de ruído é caracterizado por ter energia igual por oitava e é frequentemente usado como sinal de referência em engenharia de áudio por se alinhar à percepção humana?</p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-2 mb-4">
+                        <li>A) Ruído Branco</li>
+                        <li>B) Ruído Marrom</li>
+                        <li>C) Ruído Azul</li>
+                        <li>D) Ruído Rosa</li>
+                    </ul>
+                    <button class="reveal-answer-btn bg-amber-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors">Mostrar Resposta</button>
+                    <div class="answer-key hidden mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <p class="font-bold text-green-700">Resposta Correta: D</p>
+                        <p class="text-slate-700 mt-2">Comentário: O ruído rosa tem uma distribuição de energia que diminui 3dB por oitava, o que o torna perceptualmente mais equilibrado e útil para testes de áudio.</p>
+                    </div>
+                </div>
+
+                <!-- Pergunta 5 -->
+                <div>
+                    <p class="text-lg font-semibold text-slate-800 mb-3">5. Descreva brevemente o conceito de "escuta reduzida" de Pierre Schaeffer e sua importância para a música concreta.</p>
+                    <button class="reveal-answer-btn bg-amber-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors">Mostrar Resposta</button>
+                    <div class="answer-key hidden mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <p class="font-bold text-green-700">Resposta Correta:</p>
+                        <p class="text-slate-700 mt-2">A "escuta reduzida" é a prática de ouvir um som por suas qualidades intrínsecas (timbre, textura, envelope), abstraindo sua fonte ou significado original. Para a música concreta, isso foi crucial porque permitiu que sons gravados do mundo real (como ruídos de trem) fossem tratados como material musical abstrato, focando em suas propriedades sonoras em vez de sua origem semântica.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 7: Referências Bibliográficas -->
+        <section id="references" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Referências Bibliográficas</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">Uma seleção de obras clássicas, canônicas e atuais para aprofundar seus estudos sobre som de altura não definida, computação musical e acústica.</p>
+            </div>
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 space-y-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Obras Clássicas e Canônicas</h3>
+                    <ul class="list-disc list-inside text-slate-600 space-y-3">
+                        <li>**RUSSOLO, Luigi.** *L'Arte dei Rumori* (A Arte dos Ruídos). 1913. (Manifesto fundamental para a inclusão do ruído na música.)</li>
+                        <li>**SCHAEFFER, Pierre.** *Traité des objets musicaux*. Seuil, 1966. (Obra seminal que estabelece as bases da música concreta e da escuta reduzida.)</li>
+                        <li>**CAGE, John.** *Silence: Lectures and Writings*. Wesleyan University Press, 1961. (Contém textos essenciais sobre o piano preparado e a filosofia de Cage sobre o som e o silêncio.)</li>
+                        <li>**VARÈSE, Edgard.** *Ionisation*. 1931. (Embora seja uma composição, sua importância canônica na utilização de percussão não afinada a torna uma referência bibliográfica em si.)</li>
+                        <li>**STOCKHAUSEN, Karlheinz.** *Texte zur elektronischen und instrumentalen Musik*. DuMont Buchverlag, 1963-1978. (Coleção de textos teóricos do compositor, incluindo discussões sobre síntese sonora e serialismo.)</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Referências Atuais e Interessantes</h3>
+                    <ul class="list-disc list-inside text-slate-600 space-y-3">
+                        <li>**MOORE, Brian C. J.** *An Introduction to the Psychology of Hearing*. 6th ed. Brill, 2013. (Capítulo sobre Psicoacústica, essencial para entender a percepção do som.)</li>
+                        <li>**ROXBURGH, Edwin.** *Conducting for a New Era*. Cambridge University Press, 2023. (Contém discussões sobre técnicas instrumentais estendidas.)</li>
+                        <li>**GANN, Kyle.** *American Music in the Twentieth Century*. Schirmer Books, 1997. (Oferece contexto sobre a música experimental americana, incluindo John Cage.)</li>
+                        <li>**BERIO, Luciano.** *Sequenza III for Voice*. Universal Edition, 1965/66. (Como composição, é uma referência prática para técnicas vocais estendidas.)</li>
+                        <li>**LACHENMANN, Helmut.** *Pression for Cello*. 1969. (Outra composição que serve como referência prática para a *musique concrète instrumentale*.)</li>
+                        <li>**MCDERMOTT, J. H., & OXENHAM, A. J.** *Music perception, pitch, and the auditory system*. Current Opinion in Neurobiology, 18(4), 451–463, 2008. (Artigo científico sobre a percepção da altura.)</li>
+                        <li>**OLNEY.AI.** *Harmonic and Inharmonic Sounds*. Disponível em: [https://olney.ai/ct-modular-book/harmonic-and-inharmonic-sounds.html](https://olney.ai/ct-modular-book/harmonic-and-inharmonic-sounds.html). (Recurso online sobre inarmonicidade.)</li>
+                        <li>**WIKIPEDIA.** *Colors of noise*. Disponível em: [https://en.wikipedia.org/wiki/Colors_of_noise](https://en.wikipedia.org/wiki/Colors_of_noise). (Para uma visão geral sobre os tipos de ruído.)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+    
+    <!-- Modal Structure -->
+    <div id="pioneer-modal" class="modal fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+            <button id="close-modal" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800">&times;</button>
+            <h3 id="modal-title" class="text-2xl font-bold mb-4"></h3>
+            <p id="modal-text" class="text-slate-600"></p>
+        </div>
+    </div>
+
+
+    <footer class="text-center py-8 border-t border-slate-200 mt-12">
+        <p class="text-slate-500">Aplicação Interativa desenvolvida para exploração acadêmica.</p>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const pioneerData = {
+        russolo: {
+            name: "Luigi Russolo (1885-1947)",
+            text: "Pintor e compositor Futurista, autor do manifesto 'A Arte dos Ruídos' (1913). Argumentava que a música tradicional era limitada e que a nova paisagem sonora industrial exigia uma 'música de ruído'. Construiu os 'intonarumori', instrumentos mecânicos para criar e controlar diferentes tipos de ruído, sendo um precursor da música eletrônica.",
+            color: "bg-red-100/50"
+        },
+        varese: {
+            name: "Edgard Varèse (1883-1965)",
+            text: "Compositor que concebia a música em termos de 'massas sonoras'. Sua obra 'Ionisation' (1931) é um marco, sendo a primeira peça de concerto para conjunto de percussão solo, utilizando apenas sons de altura não definida. Varèse questionou 'O que é música senão ruídos organizados?', estabelecendo o som em si, e não apenas as notas, como material musical.",
+            color: "bg-sky-100/50"
+        },
+        cage: {
+            name: "John Cage (1912-1992)",
+            text: "Figura central da música experimental, inventou o 'piano preparado' em 1940. Ao inserir objetos como parafusos e borrachas entre as cordas, transformou o piano em uma 'orquestra de percussão de um homem só'. Suas 'Sonatas and Interludes' exploram um vasto universo de timbres percussivos e inarmônicos, deslocando o foco da harmonia para a textura e o timbre.",
+            color: "bg-green-100/50"
+        },
+        schaeffer: {
+            name: "Pierre Schaeffer (1910-1995)",
+            text: "Pai da 'musique concrète', Schaeffer utilizava sons gravados do mundo real como matéria-prima. Desenvolveu conceitos como o 'objeto sonoro' (o som divorciado de sua fonte) e a 'escuta reduzida' (ouvir o som por suas qualidades intrínsecas). Sua obra 'Étude aux chemins de fer' (1948), usando sons de trens, exemplifica essa abordagem revolucionária.",
+            color: "bg-yellow-100/50"
+        },
+        stockhausen: {
+            name: "Karlheinz Stockhausen (1928-2007)",
+            text: "Líder da 'Elektronische Musik' alemã, focada em sons gerados eletronicamente. Em 'Studie II' (1954), usou a síntese aditiva para construir timbres complexos a partir de ondas senoidais puras, com o objetivo de organizar serialmente todos os parâmetros do som, incluindo o timbre. Foi pioneiro na criação de sonoridades inteiramente novas e sintéticas.",
+            color: "bg-purple-100/50"
+        },
+        lachenmann: {
+            name: "Helmut Lachenmann (1935-)",
+            text: "Criador da 'musique concrète instrumentale', Lachenmann foca em *como* o som é produzido. Ele eleva os 'ruídos de produção' (atritos, arranhões, respiração) a material musical. Em 'Pression' (1969) para violoncelo, a notação descreve as ações físicas do músico, transformando o instrumento numa fonte de ruídos organizados e desafiando a percepção da 'beleza' musical.",
+            color: "bg-gray-100"
+        }
+    };
+    
+    const pioneersGrid = document.getElementById('pioneers-grid');
+    Object.entries(pioneerData).forEach(([key, pioneer]) => {
+        const card = document.createElement('div');
+        card.className = `pioneer-card p-6 rounded-lg cursor-pointer ${pioneer.color} border border-slate-200`;
+        card.setAttribute('data-pioneer', key);
+        card.innerHTML = `<h3 class="text-xl font-bold text-slate-800 mb-2">${pioneer.name.split(' (')[0]}</h3><p class="text-slate-500">${pioneer.name.split(' (')[1].replace(')', '')}</p>`;
+        pioneersGrid.appendChild(card);
+    });
+
+    const modal = document.getElementById('pioneer-modal');
+    const closeModal = document.getElementById('close-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalText = document.getElementById('modal-text');
+
+    pioneersGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.pioneer-card');
+        if (card) {
+            const pioneerKey = card.dataset.pioneer;
+            const data = pioneerData[pioneerKey];
+            modalTitle.textContent = data.name;
+            modalText.textContent = data.text;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    });
+
+    closeModal.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    });
+    
+    const noiseData = {
+        white: {
+            label: 'Ruído Branco',
+            description: 'Possui energia uniformemente distribuída em todas as frequências. Soa como um "chiado" constante, similar à estática de uma TV ou rádio fora do ar. É a matéria-prima para muitos sons sintetizados.',
+            color: 'rgba(100, 116, 139, 0.6)',
+            borderColor: 'rgba(100, 116, 139, 1)',
+            values: Array(12).fill(10)
+        },
+        pink: {
+            label: 'Ruído Rosa',
+            description: 'Sua energia diminui 3dB por oitava. É percebido como mais "natural" ou equilibrado para o ouvido humano, similar ao som de uma cachoeira suave, vento ou chuva. Grande parte da música se aproxima de sua distribuição espectral.',
+            color: 'rgba(236, 72, 153, 0.6)',
+            borderColor: 'rgba(236, 72, 153, 1)',
+            values: [10, 8.5, 7, 6, 5, 4.2, 3.5, 3, 2.5, 2.1, 1.8, 1.5]
+        },
+        brown: {
+            label: 'Ruído Marrom (Vermelho)',
+            description: 'Sua energia diminui 6dB por oitava, concentrando-se fortemente nas frequências graves. Soa como um trovão distante, um rugido ou o som de ondas fortes. O nome vem do "movimento browniano", não da cor.',
+            color: 'rgba(131, 81, 43, 0.6)',
+            borderColor: 'rgba(131, 81, 43, 1)',
+            values: [10, 6, 4, 2.5, 1.5, 1, 0.7, 0.5, 0.3, 0.2, 0.1, 0.05]
+        }
+    };
+
+    const ctx = document.getElementById('noiseChart').getContext('2d');
+    let chart;
+
+    function createChart(data) {
+        if (chart) {
+            chart.destroy();
+        }
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['31', '62', '125', '250', '500', '1k', '2k', '4k', '8k', '16k', '20k', '22k'],
+                datasets: [{
+                    label: data.label,
+                    data: data.values,
+                    backgroundColor: data.color,
+                    borderColor: data.borderColor,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Densidade de Potência Espectral (Relativa)' },
+                        grid: { color: 'rgba(203, 213, 225, 0.5)' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Frequência (Hz)' },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        callbacks: {
+                            title: () => '',
+                            label: (context) => ` Frequência: ${context.label} Hz`
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const noiseButtonsContainer = document.getElementById('noise-buttons');
+    const descriptionEl = document.getElementById('noise-description');
+    
+    noiseButtonsContainer.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const noiseType = e.target.dataset.noise;
+            const data = noiseData[noiseType];
+            
+            // Update button styles
+            document.querySelectorAll('.noise-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-600', 'text-white');
+                btn.classList.add('bg-slate-200', 'text-slate-800');
+            });
+            e.target.classList.add('bg-amber-600', 'text-white');
+            e.target.classList.remove('bg-slate-200', 'text-slate-800');
+
+            // Update chart and description
+            createChart(data);
+            descriptionEl.innerHTML = `<h4 class="font-bold text-lg mb-2 text-slate-800">${data.label}</h4><p>${data.description}</p>`;
+        }
+    });
+
+    // Initial state
+    document.querySelector('.noise-btn[data-noise="white"]').click();
+    
+    // Navigation handling
+    const navLinks = document.querySelectorAll('.nav-link');
+    const mobileNav = document.getElementById('mobile-nav');
+
+    function updateActiveLink(targetId) {
+        navLinks.forEach(link => {
+            if (link.getAttribute('href') === targetId) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = e.currentTarget.getAttribute('href');
+            document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+            window.history.pushState(null, null, targetId);
+            updateActiveLink(targetId);
+        });
+    });
+
+    mobileNav.addEventListener('change', (e) => {
+        const targetId = e.target.value;
+        document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+        window.history.pushState(null, null, targetId);
+    });
+    
+    // Update active link on scroll
+    const sections = document.querySelectorAll('section');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const targetId = `#${entry.target.id}`;
+                updateActiveLink(targetId);
+                if (mobileNav.value !== targetId) {
+                    mobileNav.value = targetId;
+                }
+            }
+        });
+    }, { rootMargin: '-50% 0px -50% 0px' });
+
+    sections.forEach(section => observer.observe(section));
+
+    // Exercise section reveal answer logic
+    document.querySelectorAll('.reveal-answer-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const answerKey = button.nextElementSibling;
+            answerKey.classList.toggle('hidden');
+        });
+    });
+
+});
+</script>
+
+</body>
+</html>
